@@ -1,19 +1,50 @@
-Andrew Hannebrink
+# DHCPACK-Logger-and-Infoblox-Lease-Updater
 
-These are Python scripts for parsing infoblox DHCP log files, saving
-DHCPACK events into a bi-relational MySQL database, searching that database
-dynamically using a number of search parameter options, and automatically
-updating Infoblox DHCP lease expiration dates given the user's last DHCPACK
-event. This readme will provide a brief overview of the general workflow of the
+### Table of Contents
+
+1. [Overview](#overview)
+2. [Credits](#credits)
+3. [Workflow](#workflow)
+
+
+## Overview
+
+Infoblox comes with a captive for doing authenticated DCHP, but lacks one very
+important feature.   It does NOT have the ability to remove devices from the
+database after they have been inactive for a set amount of time.   This script
+attempts to solve that problem by processing the Infoblox DHCP log file,
+extracting each unique DHCP OFFER, and updating the corresponding MAC filter
+entry with an updated expiration date based on a user defined configuration.
+
+This project contacts a number of Python scripts that are used to perform the
+following functions:
+
+    * Process Infoblox DHCP log files
+    * Log each unique MAC address handed out into a MySQL database
+    * Update Infoblox captive portal expiration date for each MAC address that
+      received a DHCP OFFER/ACK using the RestFUL API.
+    * Offer a CLI interface to quickly search DHCP history
+
+This readme will provide a brief overview of the general workflow of the
 software, what each script does, and how to set up the automated system. For
 more detailed information on each method within each script, check the source
 code for the given script, as each file contains a large amount of step-by-step
 explanatory comments.
 
 
-##############
-#  WORKFLOW  #
-##############
+## Credits and Copyright
+
+Original concept and proof of concept code by Jason E. Murray of Washington
+University in St. Louis.
+
+Vast majority (and all the real work) by Andrew Hannenbrink while working under
+the STARS (Student Technology and Resource Support -
+http://sts.wustl.edu/programs/stars/) program.
+
+All code is the copy right of Washington University in St. Louis and has been
+released under the GNU Public License.
+
+## Workflow
 
 Three scripts and a MySQL database comprise this project: dhcplog.py,
 dhcpsearch.py, rest.py, and a MySQL database.
