@@ -8,6 +8,8 @@
     * [dhcplog.py - main script to process dhcp log file and update database](#dhcplog.py)
     * [dhcpsearch.py - database search script](#dhcpsearch.py)
     * [rest.py - script to push expiration updates into Infoblox](#rest.py)
+    * [dhcppurge.py - script to clean up the database](#dhcppurge.py)
+4. [System Setup](#set-up)
 
 
 
@@ -142,21 +144,23 @@ date within the Infoblox system by requesting and modifying JSON data objects
 for each user. rest.py runs once a week and should be saved at
 /usr/local/bin/rest.py. This script takes every entry from the tempMacs table
 in the 'dhcpdb' database, and attempts to update their DHCP lease expiration
-date to 180 days from the current date.
+date to 180 days (can be customized in the configuration file) from the current
+date.
 
 IMPORTANT: In order for rest.py to run at decent pace, it needs to make a lot
 of concurrent HTTP 'GET' requests. So make sure that the Infoblox Grid Manager
 client has its http connection limit set to a high enough value with the
-command: '$ set connection_limit https <limit number', where <limit number> is
-between 0 and 2147483647, where 0 denotes no limit. This is also mentioned in
-the SET UP section of this read me.
+CLI command: 
+
+    set connection_limit https <limit number>
+
+Where <limit number> is between 0 and 2147483647, where 0 denotes no limit.
+This is also mentioned in the SET UP section of this read me.
 
 When this script finishes running, it clears the tempMacs table, preparing it
 to re-populate with next week's clients who participate in DHCPACKS.
 
-##################
-#  dhcppurge.py  #
-##################
+### dhcppurge.py
 	
 dhcppurge.py runs once a month, deleting rows from the history table that are a
 certain number of months old. So if it's May, and dbExpirationMonths is set to
@@ -167,9 +171,7 @@ Next, dhcppurge.py removes any rows from the clients table that no longer have
 any corresponding entries in the history table.
 
 
-############
-#  SET UP  #
-############
+## SET UP
 
 To set up this system, start by saving the files to the folling paths:
 	
@@ -194,28 +196,16 @@ at five in the afternoon.
 Next, edit the file /usr/local/etc/dhcpcfg.py to configure the program
 settings. This is what each variable means in dhcpcfg.py:
 
-	logFilePath -	Path to infoblox DHCP log file, usually 'infoblox.log.1'
-
-	sqlHost -	MySQL host, usually 'localhost'
-
-	sqlUser -	Username of user to sign into MySQL with. Make sure that this user has permission to edit the database specified by the 'db' parameter below.
-
-	sqlPasswd -	The MySQL user's corresponding MySQL password
-
-	db -		Name of the MySQL database to be used. The software system can create the database structure and schema on its own, but you do need to make a database by this name manually. Though, there is no table creation necessary.
-	
-	senderEmail -	The email address used to send diagnostic reports of dhcplog.py, dhcppurge.py, and rest.py
-	
-	senderPassword -	senderEmail's password
-	
-	recipientEmails -	A python list of email addresses to send the diagnostic reports to
-	
-	maxLease -	The number of days used to set a user's DHCP expiration date into the future from their last DHCPACK event.
-
-	ibxUrl -	Infoblox Grid Master URL. i.e. 'https://gm.ip.wustl.edu/wapi/v1.2/'
-
-	infobloxUser -	The username for the Infoblox account used to connect to the Grid Master
-
-	infobloxPasswd -	infobloxUser's password
-	
-	dbExpirationMonths -	Approximately the number of months to keep a history record before deleting it from the database. Check the section 'dhcppurge.py' in this README to see exactly how this works.
+* logFilePath -	Path to infoblox DHCP log file, usually 'infoblox.log.1'
+* sqlHost - MySQL host, usually 'localhost'
+* sqlUser - Username of user to sign into MySQL with. Make sure that this user has permission to edit the database specified by the 'db' parameter below.
+* sqlPasswd - The MySQL user's corresponding MySQL password
+* db - Name of the MySQL database to be used. The software system can create the database structure and schema on its own, but you do need to make a database by this name manually. Though, there is no table creation necessary.
+* senderEmail -	The email address used to send diagnostic reports of dhcplog.py, dhcppurge.py, and rest.py
+* senderPassword - senderEmail's password
+* recipientEmails - A python list of email addresses to send the diagnostic reports to
+* maxLease - The number of days used to set a user's DHCP expiration date into the future from their last DHCPACK event.
+* ibxUrl - Infoblox Grid Master URL. i.e. 'https://gm.ip.wustl.edu/wapi/v1.2/'
+* infobloxUser - The username for the Infoblox account used to connect to the Grid Master
+* infobloxPasswd - infobloxUser's password
+* dbExpirationMonths - Approximately the number of months to keep a history record before deleting it from the database. Check the section 'dhcppurge.py' in this README to see exactly how this works.
