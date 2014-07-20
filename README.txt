@@ -1,6 +1,6 @@
 # DHCPACK-Logger-and-Infoblox-Lease-Updater
 
-### Table of Contents
+#### Table of Contents
 
 1. [Overview](#overview)
 2. [Credits](#credits)
