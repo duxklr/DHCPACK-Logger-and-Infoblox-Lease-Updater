@@ -1,8 +1,13 @@
 #!/usr/bin/python
 
-# This script parses the infoblox log file /var/log/infoblox.log.1 each day when called by the dhcplog user's crontab file. Each line of the file is matched with a regular expression describing a line that logs a DHCPACK event. When there is a match, the script records the date, the clients IP address, the clients mac address, and the client's hostname. The script then stores this information to a database whose default path is /
+# This script parses the infoblox log file /var/log/infoblox.log.1 each day
+# when called by the dhcplog user's crontab file. Each line of the file is
+# matched with a regular expression describing a line that logs a DHCPACK
+# event. When there is a match, the script records the date, the clients IP
+# address, the clients mac address, and the client's hostname. The script then
+# stores this information to a database whose default path is /
 
-#What follows is sample content from /var/log/infoblox.log.1
+# What follows is sample content from /var/log/infoblox.log.1
 
 #Aug  6 09:07:29 128.252.0.1 dhcpd[7578]: DHCPREQUEST for 172.27.8.149 from 18:af:61:65:ea:a2 (iPhone) via 172.27.8.252 (RENEW)
 #Aug  6 09:07:29 128.252.0.1 dhcpd[7578]: DHCPACK on 172.27.8.149 to 18:af:61:65:ea:a2 (iPhone) via eth1 relay 172.27.8.252 lease-duration 86400 (RENEW)
@@ -112,7 +117,6 @@
 
 import re
 import sys
-#import sqlite3
 import datetime
 import logging
 import time
@@ -141,7 +145,18 @@ historyInsertions = 0
 tempMacsInsertions = 0
 clientsInsertions = 0
 
-# The below three global variables are declared here to be used by the rest of the script. Year is referenced later on as needed, and todaysIDs is a list that populates with the primary key id's of mac addresses in the clients table of 'DBFilePath' who participated in a DHCPACK on the day infoblox.log.1 was constructed. At the end of the script, the table tempMacs is populated using the mac addresses from the clients table corresponding to the id's in 'todaysIDs'. 'TodaysHistories' will contain tuples of the form (<client primary keys>, <client's ip address>, <date-time string>) of entries already inserted into the history table today. Before an entry is inserted into the history table, todaysHistories is checked first, as to not add duplicate history entries. Furthermore, as to not waste memory, we keep todaysHistories <= 100 entries.
+# The below three global variables are declared here to be used by the rest of
+# the script. Year is referenced later on as needed, and todaysIDs is a list
+# that populates with the primary key id's of mac addresses in the clients
+# table of 'DBFilePath' who participated in a DHCPACK on the day infoblox.log.1
+# was constructed. At the end of the script, the table tempMacs is populated
+# using the mac addresses from the clients table corresponding to the id's in
+# 'todaysIDs'. 'TodaysHistories' will contain tuples of the form (<client
+# primary keys>, <client's ip address>, <date-time string>) of entries already
+# inserted into the history table today. Before an entry is inserted into the
+# history table, todaysHistories is checked first, as to not add duplicate
+# history entries. Furthermore, as to not waste memory, we keep todaysHistories
+# <= 100 entries.
 
 now = datetime.datetime.now()
 yrstamp = datetime.datetime.now()  - datetime.timedelta(days = 1)
@@ -154,7 +169,11 @@ def getLines(logFilePath):
 	f = open(logFilePath)	
 	return f
 
-# This function uses the regular expression 'pattern' to find if the line passed to it from the infoblox log file describes a DHCPACK event. When a DHCPACK line is found, it matches the date, client's IP address, client's mac address, and client's hostname. It then passes this information to updateDB to update the database located at 'DBFilePath'
+# This function uses the regular expression 'pattern' to find if the line
+# passed to it from the infoblox log file describes a DHCPACK event. When a
+# DHCPACK line is found, it matches the date, client's IP address, client's mac
+# address, and client's hostname. It then passes this information to updateDB
+# to update the database located at 'DBFilePath'
 def processLine(line, conn, sqdb):
 	pattern = re.compile('^(\w+\s+\d+\s+\d{2}:\d{2}:\d{2}) (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) .*(DHCPACK) on (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) to (([0-9a-f]{2}[:-]){5}[0-9a-f]{2}) ?(?:\((.*)\))? via')
 	match = pattern.match(line)
@@ -168,7 +187,14 @@ def processLine(line, conn, sqdb):
 			clientHN = match.group(7) 
 		updateDB(conn, sqdb, date, clientIP, clientMA, clientHN)
 
-# This function is called when main() is called. If the script cannot find the tables it needs in the database specified by 'db' in the dhcpcfg.py config file, it creates them itself. Indexes are established on the clients and history tables for speed and efficeincy. The clients table contains only unique mac addresses. The history table contains records of each DHCPACK, with a foreign key reference to the associated client in the client's table. The tempMacs table contains mac addresses of recent DHCPACKS, and is purged once a week by the script '/usr/local/bin/rest.py'
+# This function is called when main() is called. If the script cannot find the
+# tables it needs in the database specified by 'db' in the dhcpcfg.py config
+# file, it creates them itself. Indexes are established on the clients and
+# history tables for speed and efficeincy. The clients table contains only
+# unique mac addresses. The history table contains records of each DHCPACK,
+# with a foreign key reference to the associated client in the client's table.
+# The tempMacs table contains mac addresses of recent DHCPACKS, and is purged
+# once a week by the script '/usr/local/bin/rest.py'
 def makeDB(db):
 	try:
 		db.execute('''CREATE TABLE clients (id INTEGER PRIMARY KEY AUTO_INCREMENT, macaddress CHAR(18) UNIQUE)''')
@@ -193,21 +219,29 @@ def makeDB(db):
         print '########## DATABASE INITIALIZED ##########'
 
 
-# Given the information extracted by processLine() from an infoblox log line describing a DHCPACK, this function adds the appropriate information to the database.
+# Given the information extracted by processLine() from an infoblox log line
+# describing a DHCPACK, this function adds the appropriate information to the
+# database.
 def updateDB(conn, sqdb, date, clientIP, clientMA, clientHN):
 	global todaysIDs
 	global todaysHistories
-	# Initialize clientID as None. clientID is the primary key of the primary key for the clients table. If a row is inserted into the clients, we change clientID to the correct primary key in the next else statement below.
+        # Initialize clientID as None. clientID is the primary key of the
+        # primary key for the clients table. If a row is inserted into the
+        # clients, we change clientID to the correct primary key in the next
+        # else statement below.
 	clientID = None
 
-	#Special case for January 2nd when the variable 'year' is correct for entries corresponding to the 1st but not the 31st in the same infoblox.log.1 file
+        # Special case for January 2nd when the variable 'year' is correct for
+        # entries corresponding to the 1st but not the 31st in the same
+        # infoblox.log.1 file
 	if (now.month, now.day) == (1, 2) and date[0:6] == 'Dec 31':
 		date = date + ' ' + str(year - 1)
 	else:	
 		#Get yesterdays year to supplement the date from the infoblox logs
 		date = date + ' ' + str(year)
 
-	# See if the mac address passed to us is already in the clients table. If it is not, insert it into the table. If not, do not insert it.
+        # See if the mac address passed to us is already in the clients table.
+        # If it is not, insert it into the table. If not, do not insert it.
 	sqdb.execute('SELECT id FROM clients WHERE macaddress = %s', (clientMA,))
 	returnObject = sqdb.fetchone()
 	lastRowId = sqdb.lastrowid
@@ -221,19 +255,31 @@ def updateDB(conn, sqdb, date, clientIP, clientMA, clientHN):
 		clientID = int(conn.insert_id())
 		global clientsInsertions
 		clientsInsertions += 1
-	#If clientID is not None and is not already in todaysIDs, append it to todaysIDs
+	# If clientID is not None and is not already in todaysIDs, append it to todaysIDs
 	if clientID and clientID not in todaysIDs:
 		todaysIDs.append(int(clientID))
 		#print clientID
 
 
-	#Do not add multiple rows in history for a user with identical times (date field). We do this because there are often duplicate lines in the infoblox.log.1 file that describe the same DHCPACK event at exactly the same time with the same user and information. This helps us from overpopulating the history table. If the clientID and date (timestamp from infoblox log file) already exist in the history table, it will be in todaysHistories, and we set 'exists' to 'True', and do not add a row to the history table. Otherwise, we check if the parameter 'clientHN' is 'None'. If it is not None, we add a row to the history table and append 'clientID' to 'todaysIDs' to be added to tempMacs.
+        # Do not add multiple rows in history for a user with identical times
+        # (date field). We do this because there are often duplicate lines in
+        # the infoblox.log.1 file that describe the same DHCPACK event at
+        # exactly the same time with the same user and information. This helps
+        # us from overpopulating the history table. If the clientID and date
+        # (timestamp from infoblox log file) already exist in the history
+        # table, it will be in todaysHistories, and we set 'exists' to 'True',
+        # and do not add a row to the history table. Otherwise, we check if the
+        # parameter 'clientHN' is 'None'. If it is not None, we add a row to
+        # the history table and append 'clientID' to 'todaysIDs' to be added to
+        # tempMacs.
 	exists = False
 	if ((clientID, clientIP, date) not in todaysHistories):
 		todaysHistories.append((clientID, clientIP, date))
 	else:
 		exists = True
-	#Update todaysHistories[] by deleting the first element (also the oldest element), so that it doesn't get too large and slow down the program.
+        # Update todaysHistories[] by deleting the first element (also the
+        # oldest element), so that it doesn't get too large and slow down the
+        # program.
 	if len(todaysHistories) > 100:
 		todaysHistories.pop(0)
 
@@ -250,7 +296,12 @@ def updateDB(conn, sqdb, date, clientIP, clientMA, clientHN):
 	
 
 
-#Builds tempMacs table using the primary key id's from the clients table that have been added to 'todaysIDs'. With this method, the tempMacs table will be updated each day with any new mac addresses that have participated in a DHCPACK in the last day. After the end of the week, the table will be used to update infoblox lease expiration dates by rest.py, which will also purge every value from tempMacs afterwards.
+# Builds tempMacs table using the primary key id's from the clients table that
+# have been added to 'todaysIDs'. With this method, the tempMacs table will be
+# updated each day with any new mac addresses that have participated in a
+# DHCPACK in the last day. After the end of the week, the table will be used to
+# update infoblox lease expiration dates by rest.py, which will also purge
+# every value from tempMacs afterwards.
 def buildTempMacs(sqdb):
 	global todaysIDs
         for clientID in todaysIDs:
@@ -269,7 +320,9 @@ def buildTempMacs(sqdb):
 def main():
 
 	startTime = time.time()
-	# Open the log file at 'logFilePath' and return each line in an array called 'lines'. Also make iteration counter 'i' and line sum 'tot' to track script progress by percentage of lines parsed.
+        # Open the log file at 'logFilePath' and return each line in an array
+        # called 'lines'. Also make iteration counter 'i' and line sum 'tot' to
+        # track script progress by percentage of lines parsed.
 	lines = getLines(logFilePath)
 	totlines = getLines(logFilePath)
 	i = 0.0
@@ -279,15 +332,20 @@ def main():
 	conn.text_factory = str
 	c = conn.cursor()
 	makeDB(c)
-	# Call processLine() on every line in 'lines'. processLine() calls updateDB(), so this iteration will update the database for every line from the infoblox log file describing a DHCPACK.
+        # Call processLine() on every line in 'lines'. processLine() calls
+        # updateDB(), so this iteration will update the database for every line
+        # from the infoblox log file describing a DHCPACK.
 	for line in lines:
 		processLine(line, conn, c)
 		i = i + 1
 		if i % 100000 == 0.0:
 			print i / tot
-	# Commit the changes to the database after the entire iteration is finished. This makes the script run hours faster than if commit() is called after each iteration.
+        # Commit the changes to the database after the entire iteration is
+        # finished. This makes the script run hours faster than if commit() is
+        # called after each iteration.
 	conn.commit()
-	# Now that the list 'todaysIDs' has been constructed by the initial iteration, build the tempMacs table with buildTempMacs()
+        # Now that the list 'todaysIDs' has been constructed by the initial
+        # iteration, build the tempMacs table with buildTempMacs()
 	buildTempMacs(c)
 	# Commit to the database again now that the tempMacs table has been updated
 	conn.commit()
@@ -309,3 +367,4 @@ def main():
 # Execute the main function
 if __name__ == '__main__':
 	sys.exit(main())
+
