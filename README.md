@@ -5,9 +5,9 @@
 1. [Overview](#overview)
 2. [Credits](#credits)
 3. [Workflow - List of scripts and their function](#workflow)
-    * dhcplog.py(#dhcplog.py)
-    * dhcpsearch.py(#dhcpsearch.py)
-    * rest.py(#rest.py)
+    * [dhcplog.py - main script to process dhcp log file and update database](#dhcplog.py)
+    * [dhcpsearch.py - database search script](#dhcpsearch.py)
+    * [rest.py - script to push expiration updates into Infoblox](#rest.py)
 
 
 
