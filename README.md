@@ -19,11 +19,11 @@ entry with an updated expiration date based on a user defined configuration.
 This project contacts a number of Python scripts that are used to perform the
 following functions:
 
-    * Process Infoblox DHCP log files
-    * Log each unique MAC address handed out into a MySQL database
-    * Update Infoblox captive portal expiration date for each MAC address that
-      received a DHCP OFFER/ACK using the RestFUL API.
-    * Offer a CLI interface to quickly search DHCP history
+* Process Infoblox DHCP log files
+* Log each unique MAC address handed out into a MySQL database
+* Update Infoblox captive portal expiration date for each MAC address that
+  received a DHCP OFFER/ACK using the RestFUL API.
+* Offer a CLI interface to quickly search DHCP history
 
 This readme will provide a brief overview of the general workflow of the
 software, what each script does, and how to set up the automated system. For
