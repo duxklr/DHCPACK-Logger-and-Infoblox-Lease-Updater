@@ -4,7 +4,11 @@
 
 1. [Overview](#overview)
 2. [Credits](#credits)
-3. [Workflow](#workflow)
+3. [Workflow - List of scripts and their function](#workflow)
+    * dhcplog.py(#dhcplog.py)
+    * dhcpsearch.py(#dhcpsearch.py)
+    * rest.py(#rest.py)
+
 
 
 ## Overview
@@ -16,7 +20,7 @@ attempts to solve that problem by processing the Infoblox DHCP log file,
 extracting each unique DHCP OFFER, and updating the corresponding MAC filter
 entry with an updated expiration date based on a user defined configuration.
 
-This project contacts a number of Python scripts that are used to perform the
+This project contains a number of Python scripts that are used to perform the
 following functions:
 
 * Process Infoblox DHCP log files
@@ -41,7 +45,7 @@ Vast majority (and all the real work) by Andrew Hannenbrink while working under
 the STARS (Student Technology and Resource Support -
 http://sts.wustl.edu/programs/stars/) program.
 
-All code is the copy right of Washington University in St. Louis and has been
+All code is the copyright of Washington University in St. Louis and has been
 released under the GNU Public License.
 
 ## Workflow
@@ -49,18 +53,20 @@ released under the GNU Public License.
 Three scripts and a MySQL database comprise this project: dhcplog.py,
 dhcpsearch.py, rest.py, and a MySQL database.
 
-##########################################
-#  dhcplog.py and the 'dhcpdb' Database  #
-##########################################
+###  dhcplog.py and the 'dhcpdb' Database 
 
-Saved at /usr/local/bin/dhcplog.py. This script runs once a day, parsing
-yesterday's Infoblox DHCP log file, loooking for lines describing a DHCPACK
-event. Then, it uploads this information to the database. When a DHCPACK event
-is found, it extracts the date, client's IP address, mac address, and hostname.
-Yesterday's Infoblox log file by default can be found at the path
-/var/log/infoblox.log.1. It can be very large, and for Washington University's
-network, is usually longer than five million lines on any given day. Below are
-five lines of a past log file, infoblox.log.1:
+Typically saved at /usr/local/bin/dhcplog.py. This script runs once a day,
+parsing yesterday's Infoblox DHCP log file, loooking for lines describing a
+DHCPACK event. Then, it updates this information to the database. When a
+DHCPACK event is found, it extracts the date, client's IP address, mac address,
+and hostname.  Yesterday's Infoblox log file by default can be found at the
+path /var/log/infoblox.log.1  (This file is rotated every night by a process
+called logrotate.   It is important to make sure that whatever system you use,
+rotates the log file before this script is called on it).  The file can be very
+large, and for Washington University's network, is usually longer than five
+million lines on any given day. Below are five lines of a past log file,
+infoblox.log.1:
+
 
 	#Aug  6 09:07:31 128.252.0.17 dhcpd[310]: DHCPINFORM from 128.252.92.140 via 128.252.157.254
 	#Aug  6 09:07:31 128.252.0.17 dhcpd[310]: DHCPACK to 128.252.92.140 (00:1f:29:01:d5:72) via eth1
@@ -75,8 +81,7 @@ database with this regular expression:
 
 Upon starting, the script also opens the database 'dhcpdb', looking for three
 tables: 'clients', 'history', and 'tempMacs'. If the script cannot find these
-tables, it executes queries for creating them. These three tables are formatted
-as follows:
+tables, it will create them. These three tables are formatted as follows:
 
 	clients (
 		id INTEGER PRIMARY KEY
@@ -96,36 +101,41 @@ as follows:
 		macaddress CHAR(18) UNIQUE
 	);
 
+The clients table keeps track of each unique MAC address which was offered an
+IP address.
+
+The history table keeps track of each unique DHCPACK event in recent history.
+Each row in the history table corresponds to IP address offered to a client.
+
+The tempMacs table keeps track of all clients who have had a DHCPACK event in
+the last week. tempMacs is used once a week to update the DHCP leases of recent
+users. This table is created in order to reduce the load on the Infoblox server
+when the weekly update to DHCP filter is performed.   This allows us to make a
+single update per MAC address per week to the backend Infoblox database.  The
+table is purged once a week by the rest.py script.
 
 
-The clients table keeps track of each unique hostname to receive a DHCPACK
-event in recent history. The history table keeps track of each unique DHCPACK
-event in recent history. Each row in the history table corresponds to a client
-from the clients table. The tempMacs table keeps track of all clients who have
-had a DHCPACK event in the last week. tempMacs is used once a week to update
-the DHCP leases of recent users. This table is also purged once a week by the
-rest.py script.
 
-	###################
-	#  dhcpsearch.py  #
-	###################
+### dhcpsearch.py
 
-This script can be used for searching the database 'dhcpdb' from the command
-line, and should be saved at the path /usr/local/bin/dhcpsearch.py. For usage,
-run '$ python /usr/local/bin/dhcpsearch.py -h'. This command returns the
+This script can be used for searching the MySQL database 'dhcpdb' from the
+command line, and should be saved at the path /usr/local/bin/dhcpsearch.py. For
+usage, run '$ python /usr/local/bin/dhcpsearch.py -h'. This command returns the
 following usage message:
 
 Search with three arguments.
 
-The -p option specifies ip address. The ip address should be surrounded by quote ticks.
+* The -p option specifies ip address. The ip address should be surrounded by
+  quote ticks.
 
-The -t option specifies the date and time, in the format: <'YYYY-MM-DD HH:MM:SS.00'> (military time surrounded by quote ticks).
+* The -t option specifies the date and time, in the format: <'YYYY-MM-DD
+  HH:MM:SS.00'> (military time surrounded by quote ticks).
 
-The -i option specifies the time increment (in minutes) of how long of an increment you want to search over. The time increment should not be surrounded by quote ticks.
+* The -i option specifies the time increment (in minutes) of how long of an
+  increment you want to search over. The time increment should not be
+  surrounded by quote ticks.
 
-#############
-#  rest.py  #
-#############	
+### rest.py
 
 rest.py uses Infoblox's Python NIOS REST API to update users' lease expiration
 date within the Infoblox system by requesting and modifying JSON data objects
