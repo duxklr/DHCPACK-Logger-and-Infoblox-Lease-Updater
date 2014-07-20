@@ -15,12 +15,13 @@
 
 ## Overview
 
-Infoblox comes with a captive for doing authenticated DCHP, but lacks one very
-important feature.   It does NOT have the ability to remove devices from the
-database after they have been inactive for a set amount of time.   This script
-attempts to solve that problem by processing the Infoblox DHCP log file,
-extracting each unique DHCP OFFER, and updating the corresponding MAC filter
-entry with an updated expiration date based on a user defined configuration.
+Infoblox comes with a captive portal for doing authenticated DCHP, but lacks
+one very important feature.   It does NOT have the ability to remove devices
+from the database after they have been inactive for a set amount of time.
+This script attempts to solve that problem by processing the Infoblox DHCP log
+file, extracting each unique DHCP OFFER, and updating the corresponding MAC
+filter entry with an updated expiration date based on a user defined
+configuration.
 
 This project contains a number of Python scripts that are used to perform the
 following functions:
