@@ -16,4 +16,5 @@ ibxUrl = 'INFOBLOX GRID MASTER URL' # i.e. 'https://gm.ip.wustl.edu/wapi/v1.2/'
 infobloxUser = '<GRID MASTER LOGIN USERNAME>'
 infobloxPasswd = '<GRID MASTER LOGIN PASSWORD>'
 dbExpirationMonths = 6 		# MONTHS TO KEEP RECORDS IN HISTORY TABLE (DONT MAKE THIS LARGER THAN 11)
+emailServer = 'mail.wustl.edu'
 

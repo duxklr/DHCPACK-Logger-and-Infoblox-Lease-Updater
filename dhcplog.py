@@ -134,10 +134,11 @@ logFilePath = dhcpcfg.logFilePath                                     #
 host = dhcpcfg.sqlHost                                                #
 user = dhcpcfg.sqlUser                                                #
 passwd = dhcpcfg.sqlPasswd                                            #
-db = dhcpcfg.db							      #
+db = dhcpcfg.db							                              #
 senderEmail = dhcpcfg.senderEmail                                     #
 senderPassword = dhcpcfg.senderPassword                               #
 recipientEmails = dhcpcfg.recipientEmails                             #
+emailServer = dhcpcfg.emailServer                                     #
 #######################################################################
 
 
@@ -356,11 +357,11 @@ def main():
 
 	# Send out diagnostic emails
 	
-	msg = string.join(('From: Andrew Hannebrink', 'To: %s' % str(recipientEmails), 'Subject: Daily dhcplog.py Diagnostic Report', '', 'Total lines read in infoblox.log.1 = ' + str(i) + '\nhistory table insertions = ' + str(historyInsertions) + '\nclients table insertions = ' + str(clientsInsertions) + '\ntempMacs table insertions = ' + str(clientsInsertions) + '\ntotal time in seconds: ' + str(endTime - startTime)), '\r\n')
-	mail = smtplib.SMTP('smtp.gmail.com', 587)
+	msg = string.join(('From: Infoblox Logging', 'To: %s' % str(recipientEmails), 'Subject: Daily dhcplog.py Diagnostic Report', '', 'Total lines read in infoblox.log.1 = ' + str(i) + '\nhistory table insertions = ' + str(historyInsertions) + '\nclients table insertions = ' + str(clientsInsertions) + '\ntempMacs table insertions = ' + str(clientsInsertions) + '\ntotal time in seconds: ' + str(endTime - startTime)), '\r\n')
+	mail = smtplib.SMTP(emailServer, 25)
 	mail.ehlo()
-	mail.starttls()
-	mail.login(senderEmail, senderPassword)
+	#mail.starttls()
+	#mail.login(senderEmail, senderPassword)
 	mail.sendmail(senderEmail, recipientEmails, msg)
 	mail.close()
 	
