@@ -21,16 +21,17 @@ import dhcpcfg
 
 #########################################################################    
 maxLease = dhcpcfg.maxLease * 86400  # Maxlease * (1 day in epoch time) #
-username = dhcpcfg.infobloxUser						#                    
-password = dhcpcfg.infobloxPasswd                       		#
-host = dhcpcfg.sqlHost							#
-user = dhcpcfg.sqlUser							#
-passwd = dhcpcfg.sqlPasswd						#
-db = dhcpcfg.db								#
-senderEmail = dhcpcfg.senderEmail					#
-senderPassword = dhcpcfg.senderPassword					#
-recipientEmails = dhcpcfg.recipientEmails				#
-url = dhcpcfg.ibxUrl
+username = dhcpcfg.infobloxUser						                    #
+password = dhcpcfg.infobloxPasswd                       		        #
+host = dhcpcfg.sqlHost							                        #
+user = dhcpcfg.sqlUser							                        #
+passwd = dhcpcfg.sqlPasswd						                        #
+db = dhcpcfg.db								                            #
+senderEmail = dhcpcfg.senderEmail					                    #
+senderPassword = dhcpcfg.senderPassword					                #
+recipientEmails = dhcpcfg.recipientEmails				                #
+url = dhcpcfg.ibxUrl                                                    #
+emailServer = dhcpcfg.emailServer                                       #
 #########################################################################
 
 #These variables keep track of different errors and successful trials of the script for the diagnostic report at the end
@@ -124,11 +125,11 @@ def main():
 	endTime = time.time()
 
 	txt = 'requests.get failures = ' + str(getFailures) + '\njson.loads failures = ' + str(jsonLoadFailures) + '\nrequests.put failures = ' + str(putFailures) + '\nsuccesses = ' + str(successes) + '\ntotal time = ' + str(endTime - startTime)
-	msg = string.join(('From: Andrew Hannebrink', 'To: %s' % str(recipientEmails), 'Subject: Weekly rest.py Diagnostic Report', '', txt), '\r\n')
-	mail = smtplib.SMTP('smtp.gmail.com', 587)
+	msg = string.join(('From: noreply@list.wustl.edu', 'To: %s' % str(recipientEmails), 'Subject: Weekly rest.py Diagnostic Report', '', txt), '\r\n')
+	mail = smtplib.SMTP(emailServer, 25)
 	mail.ehlo()
-	mail.starttls()
-	mail.login(senderEmail, senderPassword)
+	#mail.starttls()
+	#mail.login(senderEmail, senderPassword)
 	mail.sendmail(senderEmail, recipientEmails, msg)
 	mail.close()
 

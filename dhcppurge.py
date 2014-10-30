@@ -13,14 +13,15 @@ sys.path.append('/usr/local/etc/')
 import dhcpcfg
 
 #########################################################################
-dbExpirationMonths = dhcpcfg.dbExpirationMonths				# 
-host = dhcpcfg.sqlHost							#
-user = dhcpcfg.sqlUser							#
-passwd = dhcpcfg.sqlPasswd						#
-db = dhcpcfg.db								#
-senderEmail = dhcpcfg.senderEmail					#
-senderPassword = dhcpcfg.senderPassword					#
-recipientEmails = dhcpcfg.recipientEmails				#
+dbExpirationMonths = dhcpcfg.dbExpirationMonths				            #
+host = dhcpcfg.sqlHost							                        #
+user = dhcpcfg.sqlUser							                        #
+passwd = dhcpcfg.sqlPasswd						                        #
+db = dhcpcfg.db								                            #
+senderEmail = dhcpcfg.senderEmail					                    #
+senderPassword = dhcpcfg.senderPassword					                #
+recipientEmails = dhcpcfg.recipientEmails				                #
+emailServer = dhcpcfg.emailServer                                       #
 #########################################################################
 
 
@@ -46,11 +47,11 @@ def main():
 	endTime = time.time()
 	#Send diagnostic email
 	txt = 'Deleted entries in history table for month of ' + monthMap[thenMonth] + ' in ' + str(endTime - startTime) + ' seconds.'
-	msg = string.join(('From: Andrew Hannebrink', 'To: %s' % str(recipientEmails), 'Subject: Monthly dhcpPurge.py Diagnostic Report', '', txt), '\r\n')
-	mail = smtplib.SMTP('smtp.gmail.com', 587)
+	msg = string.join(('From: noreply@list.wustl.edu', 'To: %s' % str(recipientEmails), 'Subject: Monthly dhcpPurge.py Diagnostic Report', '', txt), '\r\n')
+	mail = smtplib.SMTP(emailServer, 25)
 	mail.ehlo()
-	mail.starttls()
-	mail.login(senderEmail, senderPassword)
+	#mail.starttls()
+	#mail.login(senderEmail, senderPassword)
 	mail.sendmail(senderEmail, recipientEmails, msg)
 	mail.close
 
